@@ -67,201 +67,111 @@
 </div>
 
 <script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-  import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } 
-    from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-  import { getFirestore, doc, getDoc, setDoc } 
-    from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged }
+from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import { getFirestore, doc, getDoc, setDoc }
+from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-  const firebaseConfig = {
-    apiKey: "AIzaSyCTvanae1ksxlApSyzR5aVDKz0ES5H_tug",
-    authDomain: "historial-clinico-e7239.firebaseapp.com",
-    projectId: "historial-clinico-e7239",
-    storageBucket: "historial-clinico-e7239.firebasestorage.app",
-    messagingSenderId: "971331712533",
-    appId: "1:971331712533:web:626701c07f6860e445401c"
-  };
-
-  const app = initializeApp(firebaseConfig);
-  const auth = getAuth(app);
-  const db = getFirestore(app);
-
-  let pacienteActual = null;
-
-  // 🔐 LOGIN
-  window.login = async () => {
-    const email = document.getElementById("email").value;
-    const password = document.getElementById("password").value;
-
-    try {
-      await signInWithEmailAndPassword(auth, email, password);
-      document.getElementById("error").innerText = "";
-    } catch (err) {
-      document.getElementById("error").innerText =
-        "Acceso denegado: datos incorrectos";
-    }
-  };
-
-  // 🚪 LOGOUT
-  window.logout = async () => {
-    await signOut(auth);
-    document.getElementById("email").value = "";
-    document.getElementById("password").value = "";
-  };
-
-  // 👀 SESIÓN
-  onAuthStateChanged(auth, (user) => {
-    if (user) {
-      document.getElementById("login").style.display = "none";
-      document.getElementById("app").style.display = "block";
-    } else {
-      document.getElementById("login").style.display = "block";
-      document.getElementById("app").style.display = "none";
-    }
-  });
-
-  // 📂 ABRIR PACIENTE
-  window.abrirPaciente = async (id) => {
-    pacienteActual = id;
-
-    lista.style.display = "none";
-    editor.style.display = "block";
-    titulo.innerText = `Paciente ${id}`;
-
-    const ref = doc(db, "pacientes", "paciente_" + id);
-    const snap = await getDoc(ref);
-
-    if (snap.exists()) {
-  texto.value = snap.data().historial || "";
-  fecha.innerText = snap.data().ultimaActualizacion
-    ? "Última actualización: " + snap.data().ultimaActualizacion
-    : "Sin actualizaciones";
-} else {
-  texto.value = "";
-  fecha.innerText = "Sin historial";
-}
-
-    texto.disabled = true;
-    btnGuardar.disabled = true;
-  };
-  
-  window.filtrarPacientes = () => {
-  const texto = buscador.value.toLowerCase();
-  document.querySelectorAll(".card").forEach(card => {
-    card.style.display =
-      card.innerText.toLowerCase().includes(texto)
-        ? "block"
-        : "none";
-  });
+const firebaseConfig = {
+  apiKey: "AIzaSyCTvanae1ksxlApSyzR5aVDKz0ES5H_tug",
+  authDomain: "historial-clinico-e7239.firebaseapp.com",
+  projectId: "historial-clinico-e7239",
+  storageBucket: "historial-clinico-e7239.firebasestorage.app",
+  messagingSenderId: "971331712533",
+  appId: "1:971331712533:web:626701c07f6860e445401c"
 };
 
-  // ✏️ EDITAR
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+let pacienteActual = null;
+
+// 🔐 LOGIN
+window.login = async () => {
+  try {
+    await signInWithEmailAndPassword(
+      auth,
+      email.value,
+      password.value
+    );
+    error.innerText = "";
+  } catch {
+    error.innerText = "Acceso denegado: datos incorrectos";
+  }
+};
+
+// 🚪 LOGOUT
+window.logout = async () => {
+  await signOut(auth);
+  email.value = "";
+  password.value = "";
+};
+
+// 👀 SESIÓN
+onAuthStateChanged(auth, (user) => {
+  login.style.display = user ? "none" : "block";
+  appDiv.style.display = user ? "block" : "none";
+});
+
+// 📂 ABRIR PACIENTE
+window.abrirPaciente = async (id) => {
+  pacienteActual = id;
+  lista.style.display = "none";
+  editor.style.display = "block";
+  titulo.innerText = `Paciente ${id}`;
+
+  const ref = doc(db, "pacientes", "paciente_" + id);
+  const snap = await getDoc(ref);
+
+  texto.value = snap.exists() ? snap.data().historial || "" : "";
+  fecha.innerText = snap.exists() && snap.data().ultimaActualizacion
+    ? "Última actualización: " + snap.data().ultimaActualizacion
+    : "Sin historial";
+
+  texto.disabled = true;
+  btnGuardar.disabled = true;
+};
+
+// ✏️ EDITAR (SIN AUTO-ESCRIBIR NADA)
 window.editar = () => {
   texto.disabled = false;
   btnGuardar.disabled = false;
   texto.focus();
 };
 
-  texto.focus();
-  texto.selectionStart = texto.selectionEnd = texto.value.length;
-};
+// 💾 GUARDAR (PERMITE VACÍO)
+window.guardar = async () => {
+  const ahora = new Date().toLocaleString("es-AR");
 
-
-  // Cursor al final
-  texto.focus();
-  texto.selectionStart = texto.selectionEnd = texto.value.length;
-};
-
-
-
-  // 💾 GUARDAR
- window.guardar = async () => {
-  const ahora = new Date();
-  const fechaLegible = ahora.toLocaleString("es-AR");
-  const fechaKey = ahora.toISOString().replace(/[:.]/g, "-");
-
-  const pacienteRef = doc(db, "pacientes", "paciente_" + pacienteActual);
-  const backupRef = doc(
-    db,
-    "backups",
-    "paciente_" + pacienteActual,
-    fechaKey
+  await setDoc(
+    doc(db, "pacientes", "paciente_" + pacienteActual),
+    {
+      historial: texto.value,
+      ultimaActualizacion: ahora
+    },
+    { merge: true }
   );
 
-  try {
-    // Guardado principal
-    await setDoc(
-      pacienteRef,
-      {
-        historial: texto.value,
-        ultimaActualizacion: fechaLegible
-      },
-      { merge: true }
-    );
-
-    // Backup automático
-    await setDoc(backupRef, {
-      historial: texto.value,
-      fecha: fechaLegible
-    });
-
-    texto.disabled = true;
-    btnGuardar.disabled = true;
-    fecha.innerText = "Última actualización: " + fechaLegible;
-    alert("Guardado correctamente");
-
-  } catch (e) {
-    alert("Error al guardar");
-    console.error(e);
-  }
+  texto.disabled = true;
+  btnGuardar.disabled = true;
+  fecha.innerText = "Última actualización: " + ahora;
 };
 
-  // 🔙 VOLVER
-  window.volver = () => {
-    editor.style.display = "none";
-    lista.style.display = "grid";
-  };
-  
-texto.addEventListener("input", () => {
-  if (texto.dataset.fechaPuesta) return;
+// 🔙 VOLVER
+window.volver = () => {
+  editor.style.display = "none";
+  lista.style.display = "grid";
+};
 
-  if (texto.value.trim() === "") return;
-
-  const hoy = new Date().toLocaleDateString("es-AR");
-  texto.value = hoy + ": " + texto.value;
-  texto.dataset.fechaPuesta = "true";
-
-  texto.selectionStart = texto.selectionEnd = texto.value.length;
-});
-
-
+// 📄 PDF
 window.exportarPDF = () => {
-  const contenido = texto.value || "Sin historial";
-  const tituloPDF = `Historial Clínico - Paciente ${pacienteActual}`;
-
-  const ventana = window.open("", "_blank");
-  ventana.document.write(`
-    <html>
-      <head>
-        <title>${tituloPDF}</title>
-        <style>
-          body { font-family: Arial; padding: 20px; }
-          h1 { text-align: center; }
-          pre { white-space: pre-wrap; font-size: 14px; }
-        </style>
-      </head>
-      <body>
-        <h1>${tituloPDF}</h1>
-        <pre>${contenido}</pre>
-      </body>
-    </html>
-  `);
-
-  ventana.document.close();
-  ventana.print();
+  const w = window.open("", "_blank");
+  w.document.write(`<pre>${texto.value || "Sin historial"}</pre>`);
+  w.document.close();
+  w.print();
 };
-
-
 </script>
  
 </body>
