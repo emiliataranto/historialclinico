@@ -185,23 +185,46 @@ window.editar = () => {
 
 
   // 💾 GUARDAR
-  window.guardar = async () => {
-    const ahora = new Date().toLocaleString("es-AR");
+ window.guardar = async () => {
+  const ahora = new Date();
+  const fechaLegible = ahora.toLocaleString("es-AR");
+  const fechaKey = ahora.toISOString().replace(/[:.]/g, "-");
 
- try {
-  await setDoc(setDoc(
-  doc(db, "pacientes", "paciente_" + pacienteActual),
-  { historial: texto.value, ultimaActualizacion: ahora },
-  { merge: true }
-);)
-} catch (e) {
-  alert("Error al guardar");
-}
+  const pacienteRef = doc(db, "pacientes", "paciente_" + pacienteActual);
+  const backupRef = doc(
+    db,
+    "backups",
+    "paciente_" + pacienteActual,
+    fechaKey
+  );
+
+  try {
+    // Guardado principal
+    await setDoc(
+      pacienteRef,
+      {
+        historial: texto.value,
+        ultimaActualizacion: fechaLegible
+      },
+      { merge: true }
+    );
+
+    // Backup automático
+    await setDoc(backupRef, {
+      historial: texto.value,
+      fecha: fechaLegible
+    });
 
     texto.disabled = true;
     btnGuardar.disabled = true;
-    fecha.innerText = "Última actualización: " + ahora;
-  };
+    fecha.innerText = "Última actualización: " + fechaLegible;
+    alert("Guardado correctamente");
+
+  } catch (e) {
+    alert("Error al guardar");
+    console.error(e);
+  }
+};
 
   // 🔙 VOLVER
   window.volver = () => {
