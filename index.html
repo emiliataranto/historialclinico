@@ -58,6 +58,7 @@
       <button onclick="editar()">Editar</button>
       <button onclick="guardar()" id="btnGuardar" disabled>Guardar</button>
       <br><br>
+      <button onclick="exportarPDF()">📄 Descargar PDF</button>
       <button onclick="volver()">← Volver</button>
     </div>
   </div>
@@ -236,6 +237,33 @@ window.editar = () => {
   const ahora = new Date().toLocaleString("es-AR");
   fecha.innerText = "Editando… (" + ahora + ")";
 });
+
+window.exportarPDF = () => {
+  const contenido = texto.value || "Sin historial";
+  const tituloPDF = `Historial Clínico - Paciente ${pacienteActual}`;
+
+  const ventana = window.open("", "_blank");
+  ventana.document.write(`
+    <html>
+      <head>
+        <title>${tituloPDF}</title>
+        <style>
+          body { font-family: Arial; padding: 20px; }
+          h1 { text-align: center; }
+          pre { white-space: pre-wrap; font-size: 14px; }
+        </style>
+      </head>
+      <body>
+        <h1>${tituloPDF}</h1>
+        <pre>${contenido}</pre>
+      </body>
+    </html>
+  `);
+
+  ventana.document.close();
+  ventana.print();
+};
+
 
 </script>
  
