@@ -188,13 +188,15 @@ window.editar = () => {
   window.guardar = async () => {
     const ahora = new Date().toLocaleString("es-AR");
 
-    await setDoc(
-      doc(db, "pacientes", "paciente_" + pacienteActual),
-      {
-        historial: texto.value,
-        ultimaActualizacion: ahora
-      }
-    );
+ try {
+  await setDoc(setDoc(
+  doc(db, "pacientes", "paciente_" + pacienteActual),
+  { historial: texto.value, ultimaActualizacion: ahora },
+  { merge: true }
+);)
+} catch (e) {
+  alert("Error al guardar");
+}
 
     texto.disabled = true;
     btnGuardar.disabled = true;
