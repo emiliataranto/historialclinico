@@ -158,10 +158,15 @@ window.editar = () => {
   texto.disabled = false;
   btnGuardar.disabled = false;
 
+  // ⚠️ SI ESTÁ VACÍO, NO AGREGAR FECHA
+  if (texto.value.trim() === "") {
+    texto.focus();
+    return;
+  }
+
   const hoy = new Date().toLocaleDateString("es-AR");
   const lineas = texto.value.split("\n");
 
-  // Buscar la última línea con contenido
   let ultimaLinea = "";
   for (let i = lineas.length - 1; i >= 0; i--) {
     if (lineas[i].trim() !== "") {
@@ -170,13 +175,14 @@ window.editar = () => {
     }
   }
 
-  // Si la última línea NO empieza con la fecha de hoy, agregar fecha
   if (!ultimaLinea.startsWith(hoy + ":")) {
-    if (texto.value.trim() !== "") {
-      texto.value += "\n\n";
-    }
-    texto.value += hoy + ": ";
+    texto.value += "\n\n" + hoy + ": ";
   }
+
+  texto.focus();
+  texto.selectionStart = texto.selectionEnd = texto.value.length;
+};
+
 
   // Cursor al final
   texto.focus();
