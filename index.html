@@ -138,8 +138,18 @@ window.abrirPaciente = async (id) => {
 window.editar = () => {
   texto.disabled = false;
   btnGuardar.disabled = false;
+
+  const hoy = new Date().toLocaleDateString("es-AR");
+  if (!texto.value.endsWith("\n") && texto.value !== "") {
+    texto.value += "\n";
+  }
+  texto.value += hoy + ": ";
+
   texto.focus();
+  texto.selectionStart = texto.selectionEnd = texto.value.length;
 };
+
+
 
 // 💾 GUARDAR (PERMITE VACÍO)
 window.guardar = async () => {
