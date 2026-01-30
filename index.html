@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=, initial-scale=1.0">
+    <title>Historial Clinico</title>
+     <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+   <!-- LOGIN -->
+<div id="login">
+  <h1>Acceso autorizado</h1>
+  <input type="email" id="email" placeholder="Email"><br><br>
+  <input type="password" id="password" placeholder="Contraseña"><br><br>
+ <button type="button" onclick="login()">Ingresar</button>
+
+  <p id="error" style="color:red;"></p>
+</div>
+
+<!-- APP -->
+<div id="app" style="display:none;">
+  <h1>Historial Clínico</h1>
+  <p class="subtitulo">Seleccioná un paciente</p>
+
+  <button onclick="logout()">Cerrar sesión</button>
+  <br><br>
+  
+ <div class="buscador-container">
+  <input
+    type="text"
+    id="buscador"
+    placeholder="Buscar paciente…"
+    onkeyup="filtrarPacientes()"
+  >
+</div>
+
+  <div id="lista" class="grid">
+    <div class="card" onclick="abrirPaciente(1)">Paciente 1</div>
+    <div class="card" onclick="abrirPaciente(2)">Paciente 2</div>
+    <div class="card" onclick="abrirPaciente(3)">Paciente 3</div>
+     <div class="card" onclick="abrirPaciente(4)">Paciente 4</div>
+    <div class="card" onclick="abrirPaciente(5)">Paciente 5</div>
+    <div class="card" onclick="abrirPaciente(6)">Paciente 6</div>
+    <div class="card" onclick="abrirPaciente(7)">Paciente 7</div>
+    <div class="card" onclick="abrirPaciente(8)">Paciente 8</div>
+    <div class="card" onclick="abrirPaciente(9)">Paciente 9</div>
+     <div class="card" onclick="abrirPaciente(10)">Paciente 10</div>
+    <div class="card" onclick="abrirPaciente(11)">Paciente 11</div>
+  </div>
+
+  <div id="editor" class="editor" style="display:none;">
+    <h1 id="titulo"></h1>
+    <p id="fecha" style="font-size:14px; color:gray;"></p>
+
+    <textarea id="texto" disabled></textarea>
+
+    <div class="botones">
+      <button onclick="editar()">Editar</button>
+      <button onclick="guardar()" id="btnGuardar" disabled>Guardar</button>
+      <br><br>
+      <button onclick="volver()">← Volver</button>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+  import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } 
+    from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+  import { getFirestore, doc, getDoc, setDoc } 
+    from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyCTvanae1ksxlApSyzR5aVDKz0ES5H_tug",
+    authDomain: "historial-clinico-e7239.firebaseapp.com",
+    projectId: "historial-clinico-e7239",
+    storageBucket: "historial-clinico-e7239.firebasestorage.app",
+    messagingSenderId: "971331712533",
+    appId: "1:971331712533:web:626701c07f6860e445401c"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+
+  let pacienteActual = null;
+
+  // 🔐 LOGIN
+  window.login = async () => {
+    const email = document.getElementById("email").value;
+    const password = document.getElementById("password").value;
+
+    try {
+      await signInWithEmailAndPassword(auth, email, password);
+      document.getElementById("error").innerText = "";
+    } catch (err) {
+      document.getElementById("error").innerText =
+        "Acceso denegado: datos incorrectos";
+    }
+  };
+
+  // 🚪 LOGOUT
+  window.logout = async () => {
+    await signOut(auth);
+    document.getElementById("email").value = "";
+    document.getElementById("password").value = "";
+  };
+
+  // 👀 SESIÓN
+  onAuthStateChanged(auth, (user) => {
+    if (user) {
+      document.getElementById("login").style.display = "none";
+      document.getElementById("app").style.display = "block";
+    } else {
+      document.getElementById("login").style.display = "block";
+      document.getElementById("app").style.display = "none";
+    }
+  });
+
+  // 📂 ABRIR PACIENTE
+  window.abrirPaciente = async (id) => {
+    pacienteActual = id;
+
+    lista.style.display = "none";
+    editor.style.display = "block";
+    titulo.innerText = `Paciente ${id}`;
+
+    const ref = doc(db, "pacientes", "paciente_" + id);
+    const snap = await getDoc(ref);
+
+    if (snap.exists()) {
+  texto.value = snap.data().historial || "";
+  fecha.innerText = snap.data().ultimaActualizacion
+    ? "Última actualización: " + snap.data().ultimaActualizacion
+    : "Sin actualizaciones";
+} else {
+  texto.value = "";
+  fecha.innerText = "Sin historial";
+}
+
+    texto.disabled = true;
+    btnGuardar.disabled = true;
+  };
+  
+  window.filtrarPacientes = () => {
+  const texto = buscador.value.toLowerCase();
+  document.querySelectorAll(".card").forEach(card => {
+    card.style.display =
+      card.innerText.toLowerCase().includes(texto)
+        ? "block"
+        : "none";
+  });
+};
+
+  // ✏️ EDITAR
+window.editar = () => {
+  texto.disabled = false;
+  btnGuardar.disabled = false;
+
+  const hoy = new Date().toLocaleDateString("es-AR");
+  const lineas = texto.value.split("\n");
+
+  // Buscar la última línea con contenido
+  let ultimaLinea = "";
+  for (let i = lineas.length - 1; i >= 0; i--) {
+    if (lineas[i].trim() !== "") {
+      ultimaLinea = lineas[i].trim();
+      break;
+    }
+  }
+
+  // Si la última línea NO empieza con la fecha de hoy, agregar fecha
+  if (!ultimaLinea.startsWith(hoy + ":")) {
+    if (texto.value.trim() !== "") {
+      texto.value += "\n\n";
+    }
+    texto.value += hoy + ": ";
+  }
+
+  // Cursor al final
+  texto.focus();
+  texto.selectionStart = texto.selectionEnd = texto.value.length;
+};
+
+
+
+  // 💾 GUARDAR
+  window.guardar = async () => {
+    const ahora = new Date().toLocaleString("es-AR");
+
+    await setDoc(
+      doc(db, "pacientes", "paciente_" + pacienteActual),
+      {
+        historial: texto.value,
+        ultimaActualizacion: ahora
+      }
+    );
+
+    texto.disabled = true;
+    btnGuardar.disabled = true;
+    fecha.innerText = "Última actualización: " + ahora;
+  };
+
+  // 🔙 VOLVER
+  window.volver = () => {
+    editor.style.display = "none";
+    lista.style.display = "grid";
+  };
+  
+  texto.addEventListener("input", () => {
+  const ahora = new Date().toLocaleString("es-AR");
+  fecha.innerText = "Editando… (" + ahora + ")";
+});
+
+</script>
+ 
+</body>
+</html>
