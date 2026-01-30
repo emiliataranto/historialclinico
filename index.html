@@ -157,27 +157,8 @@
 window.editar = () => {
   texto.disabled = false;
   btnGuardar.disabled = false;
-
-  // ⚠️ SI ESTÁ VACÍO, NO AGREGAR FECHA
-  if (texto.value.trim() === "") {
-    texto.focus();
-    return;
-  }
-
-  const hoy = new Date().toLocaleDateString("es-AR");
-  const lineas = texto.value.split("\n");
-
-  let ultimaLinea = "";
-  for (let i = lineas.length - 1; i >= 0; i--) {
-    if (lineas[i].trim() !== "") {
-      ultimaLinea = lineas[i].trim();
-      break;
-    }
-  }
-
-  if (!ultimaLinea.startsWith(hoy + ":")) {
-    texto.value += "\n\n" + hoy + ": ";
-  }
+  texto.focus();
+};
 
   texto.focus();
   texto.selectionStart = texto.selectionEnd = texto.value.length;
@@ -239,10 +220,18 @@ window.editar = () => {
     lista.style.display = "grid";
   };
   
-  texto.addEventListener("input", () => {
-  const ahora = new Date().toLocaleString("es-AR");
-  fecha.innerText = "Editando… (" + ahora + ")";
+texto.addEventListener("input", () => {
+  if (texto.dataset.fechaPuesta) return;
+
+  if (texto.value.trim() === "") return;
+
+  const hoy = new Date().toLocaleDateString("es-AR");
+  texto.value = hoy + ": " + texto.value;
+  texto.dataset.fechaPuesta = "true";
+
+  texto.selectionStart = texto.selectionEnd = texto.value.length;
 });
+
 
 window.exportarPDF = () => {
   const contenido = texto.value || "Sin historial";
