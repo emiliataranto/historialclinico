@@ -64,6 +64,8 @@
   </div>
 </div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
 <script type="module"> 
   console.log("SCRIPT CARGADO");
 
@@ -128,15 +130,28 @@ btnLogin.addEventListener("click", async () => {
   window.volver = () => { editor.style.display = "none"; lista.style.display = "grid"; }; texto.addEventListener("input", () => { const ahora = new Date().toLocaleString("es-AR"); fecha.innerText = "Editando… (" + ahora + ")"; }); 
   
   window.exportarPDF = () => {
-  const contenido = texto.value || "Sin historial";
-  const tituloPDF = `Historial Clínico - Paciente ${pacienteActual}`;
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
 
-  const ventana = window.open("", "_blank");
-  ventana.document.write(`
-  `);
+  const margenX = 15;
+  let y = 20;
 
-  ventana.document.close();
-  ventana.print();
+  doc.setFontSize(16);
+  doc.text(`Historial Clínico - Paciente ${pacienteActual}`, margenX, y);
+
+  y += 10;
+  doc.setFontSize(10);
+  doc.text(`Generado el: ${new Date().toLocaleString("es-AR")}`, margenX, y);
+
+  y += 10;
+  doc.setFontSize(12);
+
+  const textoHistorial = texto.value || "Sin historial";
+
+  const lineas = doc.splitTextToSize(textoHistorial, 180);
+  doc.text(lineas, margenX, y);
+
+  doc.save(`historial_paciente_${pacienteActual}.pdf`);
 };
 
 </script>
